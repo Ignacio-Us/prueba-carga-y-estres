@@ -1,6 +1,7 @@
 import { pool, testConnection } from '../config/db.js';
 import { initSchema } from './init-schema.js';
 
+// Script de inicialización manual: verifica conexión y aplica el schema SQL.
 async function main(): Promise<void> {
     await testConnection();
     await initSchema();

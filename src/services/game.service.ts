@@ -6,6 +6,7 @@ import {
     mapGameRow,
 } from '../models/game.model.js';
 
+// Inserta un nuevo juego en la base de datos y retorna el registro creado.
 export async function createGame(input: CreateGameInput): Promise<Game> {
     const result = await pool.query(
         `INSERT INTO juegos (nombre, genero, plataforma, fecha_lanzamiento, precio)
@@ -17,11 +18,13 @@ export async function createGame(input: CreateGameInput): Promise<Game> {
     return mapGameRow(result.rows[0]);
 }
 
+// Obtiene todos los juegos ordenados por id ascendente.
 export async function getAllGames(): Promise<Game[]> {
     const result = await pool.query('SELECT * FROM juegos ORDER BY id ASC');
     return result.rows.map(mapGameRow);
 }
 
+// Busca un juego por su id. Retorna null si no existe.
 export async function getGameById(id: number): Promise<Game | null> {
     const result = await pool.query('SELECT * FROM juegos WHERE id = $1', [id]);
 
@@ -32,6 +35,7 @@ export async function getGameById(id: number): Promise<Game | null> {
     return mapGameRow(result.rows[0]);
 }
 
+// Reemplaza todos los campos de un juego existente. Retorna null si el id no existe.
 export async function updateGame(id: number, input: UpdateGameInput): Promise<Game | null> {
     const result = await pool.query(
         `UPDATE juegos
@@ -48,6 +52,7 @@ export async function updateGame(id: number, input: UpdateGameInput): Promise<Ga
     return mapGameRow(result.rows[0]);
 }
 
+// Elimina un juego por id. Retorna true si se eliminó, false si no existía.
 export async function deleteGame(id: number): Promise<boolean> {
     const result = await pool.query('DELETE FROM juegos WHERE id = $1', [id]);
     return (result.rowCount ?? 0) > 0;

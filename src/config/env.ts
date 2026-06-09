@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
 
+// Carga las variables definidas en el archivo .env hacia process.env
 dotenv.config();
 
+// Obtiene una variable de entorno obligatoria o lanza error si no existe.
 function requireEnv(name: string): string {
     const value = process.env[name];
     if (!value) {
@@ -10,6 +12,7 @@ function requireEnv(name: string): string {
     return value;
 }
 
+// Valida que una variable de entorno sea un número de puerto válido.
 function requirePort(name: string): number {
     const value = parseInt(requireEnv(name), 10);
     if (Number.isNaN(value)) {
@@ -18,6 +21,7 @@ function requirePort(name: string): number {
     return value;
 }
 
+// Configuración centralizada y validada de la aplicación
 export const env = {
     db: {
         user: requireEnv('DB_USER'),

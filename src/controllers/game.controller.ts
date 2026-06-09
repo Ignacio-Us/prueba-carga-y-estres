@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { parseGameId, parseGameInput } from '../models/game.model.js';
 import * as gameService from '../services/game.service.js';
 
+// POST /api/games — Valida el body y crea un juego (201).
 export async function createGame(req: Request, res: Response): Promise<void> {
     const input = parseGameInput(req.body);
 
@@ -14,11 +15,13 @@ export async function createGame(req: Request, res: Response): Promise<void> {
     res.status(201).json(game);
 }
 
+// GET /api/games — Retorna la lista completa de juegos.
 export async function getAllGames(_req: Request, res: Response): Promise<void> {
     const games = await gameService.getAllGames();
     res.json(games);
 }
 
+// GET /api/games/:id — Retorna un juego o 404 si no existe.
 export async function getGameById(req: Request, res: Response): Promise<void> {
     const id = parseGameId(req.params.id);
 
@@ -37,6 +40,7 @@ export async function getGameById(req: Request, res: Response): Promise<void> {
     res.json(game);
 }
 
+// PUT /api/games/:id — Actualiza un juego existente o retorna 404.
 export async function updateGame(req: Request, res: Response): Promise<void> {
     const id = parseGameId(req.params.id);
 
@@ -62,6 +66,7 @@ export async function updateGame(req: Request, res: Response): Promise<void> {
     res.json(game);
 }
 
+// DELETE /api/games/:id — Elimina un juego y responde 204 sin contenido.
 export async function deleteGame(req: Request, res: Response): Promise<void> {
     const id = parseGameId(req.params.id);
 

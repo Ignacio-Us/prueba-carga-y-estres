@@ -1,3 +1,4 @@
+// Representación de un juego tal como se expone en la API.
 export interface Game {
     id: number;
     nombre: string;
@@ -7,6 +8,7 @@ export interface Game {
     precio: number;
 }
 
+// Datos requeridos para crear o actualizar un juego.
 export interface CreateGameInput {
     nombre: string;
     genero: string;
@@ -26,6 +28,10 @@ interface GameRow {
     precio: string;
 }
 
+/**
+ * Convierte una fila de PostgreSQL al formato de respuesta de la API.
+ * Transforma la fecha a string ISO (YYYY-MM-DD) y el precio DECIMAL a number Float.
+ */
 export function mapGameRow(row: GameRow): Game {
     return {
         id: row.id,
@@ -37,10 +43,15 @@ export function mapGameRow(row: GameRow): Game {
     };
 }
 
+// Comprueba si un string representa una fecha válida.
 function isValidDate(value: string): boolean {
     return !Number.isNaN(Date.parse(value));
 }
 
+/**
+ * Valida y normaliza el body de una petición de creación o actualización.
+ * Retorna null si algún campo es inválido o falta.
+ */
 export function parseGameInput(body: unknown): CreateGameInput | null {
     if (!body || typeof body !== 'object') {
         return null;
@@ -73,6 +84,7 @@ export function parseGameInput(body: unknown): CreateGameInput | null {
     };
 }
 
+// Convierte el parámetro :id de la URL a número entero positivo, o null si es inválido.
 export function parseGameId(value: string): number | null {
     const id = parseInt(value, 10);
     if (Number.isNaN(id) || id <= 0) {
