@@ -1,0 +1,96 @@
+# Stack de monitoreo para pruebas de carga y estrés
+# Levantar con: docker compose -f docker-compose.monitoring.yml up -d
+# Correr K6:    docker compose -f docker-compose.monitoring.yml --profile tests run --rm k6 run /scripts/plan-carga.js
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: monitoring-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-remote-write-receiver'   # Habilita endpoint /api/v1/write para K6
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - prueba-carga-network
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: monitoring-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${DB_USER}:${DB_PASSWORD}@juegos-postgres:5432/${DB_NAME}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    networks:
+      - prueba-carga-network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: monitoring-cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /etc/machine-id:/etc/machine-id:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - prueba-carga-network
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: monitoring-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3030:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - prueba-carga-network
+
+  k6:
+    image: grafana/k6:0.53.0
+    container_name: monitoring-k6
+    profiles: ["tests"]   # No arranca con 'up', solo con --profile tests run
+    environment:
+      K6_OUT: experimental-prometheus-rw
+      K6_PROMETHEUS_RW_SERVER_URL: http://prometheus:9090/api/v1/write
+      K6_PROMETHEUS_RW_TREND_STATS: "p(50),p(90),p(95),p(99),min,max,avg"
+      K6_PROMETHEUS_RW_PUSH_INTERVAL: 5s
+      API_BASE_URL: http://juegos-api:3000
+    volumes:
+      - ./k6/scripts:/scripts:ro
+      - ./k6/data:/data:ro
+    networks:
+      - prueba-carga-network
+
+networks:
+  prueba-carga-network:
+    external: true   # Definida en docker-compose.yml principal
+
+volumes:
+  prometheus_data:
+  grafana_data:
