@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 5s          # Alta resolución durante pruebas de carga
+  evaluation_interval: 5s
+  external_labels:
+    monitor: 'juegos-api-monitor'
+
+scrape_configs:
+  # Auto-scrape del propio Prometheus
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Métricas de PostgreSQL (conexiones, locks, queries, etc.)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['monitoring-postgres-exporter:9187']
+
+  # Métricas de contenedores Docker (CPU, RAM, red, disco)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['monitoring-cadvisor:8080']
+
+# Nota: K6 no se scrapea — empuja sus métricas vía remote_write al endpoint
+#       /api/v1/write que se habilitó con --web.enable-remote-write-receiver

@@ -17,6 +17,33 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - prueba-carga-network
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: juegos-api
+    restart: unless-stopped
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: postgres        # Nombre del servicio en Docker network
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      API_HOST: 0.0.0.0
+      API_PORT: ${API_PORT}
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - prueba-carga-network    
 
+networks:
+  prueba-carga-network:
+    name: prueba-carga-network
+  
 volumes:
   postgres_data:
